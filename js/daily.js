@@ -25,6 +25,7 @@ const Daily = (() => {
     workDate.value = DailyKeys.today();
     workDate.addEventListener("change", updateKeys);
     updateKeys();
+    applySiteDefault();
 
     document.getElementById("addWorkBtn").addEventListener("click", () => addWorkRow());
     document.getElementById("addEquipmentBtn").addEventListener("click", () => addEquipmentRow());
@@ -46,6 +47,12 @@ const Daily = (() => {
     document.getElementById("dateCode").value = keys.date_code;
     document.getElementById("dailyId").value = keys.daily_id;
     document.getElementById("todayLabel").textContent = workDate;
+  }
+
+  function applySiteDefault() {
+    const siteInput = document.querySelector('[name="site"]');
+    const site = Master.first ? Master.first("site") : "";
+    if (siteInput && !siteInput.value && site && site !== "현장명 입력") siteInput.value = site;
   }
 
   function addWorkRow(item = {}) {
@@ -274,8 +281,21 @@ const Daily = (() => {
   async function exportPdf() {
     const payload = collect();
     renderPrintPreview(payload);
-    await Api.request("export_daily_pdf", payload);
-    App.toast("출력폼 미리보기를 만들었습니다.");
+    const result = await Api.request("export_daily_pdf", payload);
+    showSavedPdfLink(result);
+    App.toast(result.pdf_url ? "Drive에 작업일보 PDF를 저장했습니다." : "출력폼 미리보기를 만들었습니다.");
+  }
+
+  function showSavedPdfLink(result) {
+    if (!result || !result.pdf_url) return;
+    const toolbar = document.querySelector("#printPreview .print-toolbar .actions");
+    if (!toolbar) return;
+    const link = document.createElement("a");
+    link.href = result.pdf_url;
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    link.innerHTML = '<button type="button" class="secondary">Drive PDF 열기</button>';
+    toolbar.appendChild(link);
   }
 
   function renderPrintPreview(payload) {
@@ -285,7 +305,9 @@ const Daily = (() => {
     preview.innerHTML = `
       <div class="print-toolbar">
         <strong>작업일보 출력폼 미리보기</strong>
-        <button type="button" id="browserPrintBtn">브라우저 인쇄</button>
+        <div class="actions">
+          <button type="button" id="browserPrintBtn">브라우저 인쇄</button>
+        </div>
       </div>
       <article class="print-page">
         <div class="print-title">

@@ -1,5 +1,6 @@
 const Master = (() => {
   const types = {
+    site: "masterSite",
     trade: "masterTrade",
     material: "masterMaterial",
     equipment: "masterEquipment",
@@ -10,6 +11,7 @@ const Master = (() => {
 
   function defaultItems() {
     return [
+      { code_type: "site", code_name: "현장명 입력" },
       { code_type: "trade", code_name: "가설공사" },
       { code_type: "trade", code_name: "철근공사" },
       { code_type: "trade", code_name: "콘크리트공사" },
@@ -65,6 +67,7 @@ const Master = (() => {
 
   function renderLists(grouped = group(read())) {
     setOptions("tradeList", grouped.trade);
+    setOptions("siteList", grouped.site);
     setOptions("materialList", grouped.material);
     setOptions("equipmentList", grouped.equipment);
     setOptions("companyList", grouped.company);
@@ -92,18 +95,34 @@ const Master = (() => {
   async function load() {
     const result = await Api.request("get_master");
     render(result.items || defaultItems());
+    applyDefaults();
   }
 
   async function save() {
     const items = read();
     const result = await Api.request("save_master", { items });
     render(items);
+    applyDefaults();
     App.toast(result.status === "ok" ? "기준정보를 저장했습니다." : "기준정보 저장에 실패했습니다.");
   }
 
   function restore() {
     render(defaultItems());
+    applyDefaults();
     App.toast("기본 기준정보를 복원했습니다.");
+  }
+
+  function first(type) {
+    const grouped = group(read());
+    return (grouped[type] || [])[0] || "";
+  }
+
+  function applyDefaults() {
+    const site = first("site");
+    const dailySite = document.querySelector('[name="site"]');
+    const progressSite = document.getElementById("progressProjectName");
+    if (dailySite && !dailySite.value && site && site !== "현장명 입력") dailySite.value = site;
+    if (progressSite && !progressSite.value && site && site !== "현장명 입력") progressSite.value = site;
   }
 
   function escapeHtml(value) {
@@ -122,6 +141,8 @@ const Master = (() => {
     save,
     restore,
     read,
+    first,
+    applyDefaults,
     escapeHtml
   };
 })();

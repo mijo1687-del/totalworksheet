@@ -14,6 +14,10 @@ const ProgressReport = (() => {
 
     document.getElementById("progressStartDate").value = toDateInput(start);
     document.getElementById("progressEndDate").value = toDateInput(end);
+    const site = Master.first ? Master.first("site") : "";
+    if (site && site !== "현장명 입력") {
+      document.getElementById("progressProjectName").value = site;
+    }
   }
 
   async function render(type) {

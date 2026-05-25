@@ -180,7 +180,7 @@ const Api = (() => {
       return Promise.resolve({
         status: "ok",
         pdf_url: "",
-        message: "브라우저 인쇄로 PDF 저장이 가능합니다."
+        message: "GAS 연결 후 Drive 작업일보 PDF 폴더에 저장됩니다."
       });
     }
 
