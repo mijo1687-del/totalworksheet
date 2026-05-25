@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>현장작업일보 허브</title>
+<style>
+:root{--b:#e1e4e8;--bg:#fff;--bg2:#f6f7f8;--fg:#111;--fg2:#666;--blue:#1a73e8;--red:#c5221f}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,'Noto Sans KR',sans-serif}
+.screen{display:none;min-height:100vh}.on{display:block}.hdr{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--b);padding:14px 16px;display:flex;gap:10px;align-items:center;z-index:2}.ttl{font-weight:900;font-size:18px}.sub{font-size:12px;color:var(--fg2);margin-top:2px}.body{padding:14px}.card{border:1px solid var(--b);border-radius:16px;padding:14px;margin-bottom:12px;background:#fff}.ct{font-weight:900;margin-bottom:10px}.btn{border:0;border-radius:12px;padding:12px 13px;font-weight:900;font-size:14px;background:var(--blue);color:#fff}.btn2{background:var(--bg2);color:var(--fg);border:1px solid var(--b)}.btnr{background:#fdecea;color:var(--red);border:1px solid var(--red)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field{margin-bottom:10px}.lab{font-size:12px;font-weight:900;color:var(--fg2);display:block;margin-bottom:4px}.inp,textarea,select{width:100%;border:1px solid var(--b);border-radius:10px;padding:11px;font-size:14px}textarea{min-height:70px}.item{background:var(--bg2);border:1px solid var(--b);border-radius:14px;padding:10px;margin-bottom:9px}.ih{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:900;font-size:13px}.mini{border:1px solid var(--b);border-radius:8px;background:#fff;padding:6px 8px;font-weight:900}.bottom{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--b);padding:10px 14px;display:flex;gap:8px}.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#111;color:#fff;border-radius:22px;padding:10px 16px;opacity:0;transition:.2s}.show{opacity:1}.badge{display:inline-block;background:#e8f0fe;color:#1a73e8;border-radius:999px;padding:5px 8px;margin:2px;font-size:12px;font-weight:900}.link{background:var(--bg2);border-radius:12px;padding:9px;margin-bottom:7px;font-size:13px}.topbtn{width:38px;height:38px;border-radius:50%;border:1px solid var(--b);background:var(--bg2)}
+
+.photo-pdf-card{border:1px solid var(--b);background:#fff;border-radius:14px;padding:12px;margin-bottom:9px;display:flex;gap:10px;align-items:center}
+.photo-pdf-icon{width:42px;height:42px;border-radius:12px;background:#e8f0fe;color:#1a73e8;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.photo-pdf-info{flex:1;min-width:0}
+.photo-pdf-title{font-size:14px;font-weight:900;margin-bottom:3px}
+.photo-pdf-meta{font-size:11px;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.photo-pdf-actions{display:flex;gap:6px;margin-top:7px}
+.photo-pdf-actions .mini{font-size:12px}
+
+</style>
+</head>
+<body>
+<div id="s-home" class="screen on"><div class="hdr"><div><div class="ttl">📒 현장작업일보 허브</div><div class="sub" id="homeSite">현장명 미설정</div></div><button class="topbtn" onclick="go('set')">⚙️</button></div><div class="body">
+<div class="card"><div class="ct">현장기록의 중심</div><div class="sub">작업·출역·장비·자재·사진대장·제출서류를 하루 기준으로 연결합니다.</div></div>
+<div class="grid">
+<button class="btn" onclick="newDaily()">작업일보 작성</button>
+<button class="btn btn2" onclick="copyYesterday()">어제 복사</button>
+<button class="btn btn2" onclick="go('arc')">보관함</button>
+<button class="btn btn2" onclick="go('sum')">누계/검색</button>
+<button class="btn btn2" onclick="go('master')">기준정보 관리</button>
+</div>
+
+</div></div>
+
+<div id="s-form" class="screen"><div class="hdr"><button class="topbtn" onclick="go('home')">←</button><div><div class="ttl">작업일보 작성</div><div class="sub">사진은 사진관리앱 자료를 연결합니다</div></div></div><div class="body">
+<div class="card"><div class="ct">기본정보</div><div class="grid"><div class="field"><label class="lab">작업일</label><input id="workDate" type="date" class="inp" onchange="updateCodePreview();checkPhotoPdf()"></div><div class="field"><label class="lab">날씨</label><select id="weather" class="inp"><option>맑음</option><option>흐림</option><option>비</option><option>눈</option><option>강풍</option></select></div></div><div class="grid"><div class="field"><label class="lab">작성자</label><input id="writer" class="inp"></div><div class="field"><label class="lab">기온</label><input id="temp" class="inp"></div></div><div class="field"><label class="lab">특이사항</label><textarea id="note"></textarea></div><div class="field"><label class="lab">명일 작업계획</label><textarea id="tomorrow"></textarea></div>
+<div class="field">
+  <label class="lab">기록 코드</label>
+  <div class="link">
+    <b id="codeDaily">DR-YYYYMMDD-자동</b>
+    <div class="sub">모든 작업·자재·장비·첨부·사진대장은 이 코드와 날짜코드로 연결됩니다.</div>
+  </div>
+</div></div>
+<div class="card"><div class="ct">작업 상세 <button class="mini" onclick="addWork()">+ 추가</button></div><div id="works"></div></div>
+<div class="card"><div class="ct">출역 현황 <button class="mini" onclick="addWorker()">+ 추가</button></div><div id="workers"></div></div>
+<div class="card"><div class="ct">장비 사용 <button class="mini" onclick="addEquip()">+ 추가</button></div><div id="equips"></div></div>
+<div class="card"><div class="ct">자재 반입/사용 <button class="mini" onclick="addMat()">+ 추가</button></div><div id="mats"></div></div>
+<div class="card"><div class="ct">금일 사진대장 연결 <button class="mini" onclick="checkPhotoPdf()">조회</button></div><div id="photoLinks" class="sub">조회 전입니다.</div></div>
+<div class="card"><div class="ct">금일 제출서류/첨부 <button class="mini" onclick="openAttach()">+ 첨부</button></div><div id="atts"></div></div>
+</div><div class="bottom"><button class="btn btn2" onclick="saveLocal()">임시저장</button><button class="btn" onclick="saveServer()">저장/PDF</button></div></div>
+
+
+<div id="s-master" class="screen">
+  <div class="hdr"><button class="topbtn" onclick="go('home')">←</button><div><div class="ttl">기준정보 관리</div><div class="sub">공종·자재·장비·업체·위치 자동완성 관리</div></div></div>
+  <div class="body">
+    <div class="card">
+      <div class="ct">기준정보 추가</div>
+      <div class="field"><label class="lab">구분</label>
+        <select id="masterType" class="inp">
+          <option value="trade">공종</option>
+          <option value="material">자재</option>
+          <option value="equipment">장비</option>
+          <option value="company">업체</option>
+          <option value="location">위치</option>
+          <option value="unit">단위</option>
+        </select>
+      </div>
+      <div class="field"><label class="lab">명칭</label><input id="masterName" class="inp" placeholder="예) 철근공사"></div>
+      <button class="btn" style="width:100%" onclick="addMaster()">추가</button>
+    </div>
+    <div class="card">
+      <div class="ct">등록 목록</div>
+      <div id="masterList"></div>
+    </div>
+  </div>
+</div>
+
+<div id="s-set" class="screen"><div class="hdr"><button class="topbtn" onclick="go('home')">←</button><div class="ttl">설정</div></div><div class="body"><div class="card">
+<div class="field"><label class="lab">작업일보 Apps Script URL</label><input id="dailyUrl" class="inp"></div>
+<div class="field"><label class="lab">사진관리 Apps Script URL</label><input id="photoUrl" class="inp" placeholder="사진관리 PDF 조회용 URL"></div>
+<div class="field"><label class="lab">현장명</label><input id="site" class="inp"></div>
+<div class="field"><label class="lab">회사명</label><input id="company" class="inp"></div>
+<div class="field"><label class="lab">작성자</label><input id="setWriter" class="inp"></div>
+<button class="btn" style="width:100%" onclick="saveSet()">저장</button></div></div></div>
+
+<div id="s-arc" class="screen"><div class="hdr"><button class="topbtn" onclick="go('home')">←</button><div class="ttl">보관함</div></div><div class="body" id="arcList"></div></div>
+<div id="s-sum" class="screen"><div class="hdr"><button class="topbtn" onclick="go('home')">←</button><div class="ttl">누계/검색</div></div><div class="body" id="sumList"></div></div>
+
+<div id="attSheet" style="display:none;position:fixed;inset:auto 0 0 0;background:#fff;border-radius:20px 20px 0 0;border-top:1px solid var(--b);padding:18px;z-index:5">
+<div class="ct">제출서류 첨부</div><div class="field"><label class="lab">구분</label><select id="attType" class="inp"><option>검측</option><option>검수</option><option>자재</option><option>품질</option><option>안전</option><option>공무</option><option>기타</option></select></div><div class="field"><label class="lab">문서명</label><input id="attTitle" class="inp"></div><div class="field"><label class="lab">관련 공종</label><input id="attTrade" class="inp"></div><div class="grid"><button class="btn btn2" onclick="pickAtt('cam')">촬영</button><button class="btn btn2" onclick="pickAtt('file')">파일</button></div><button class="btn" style="width:100%;margin-top:8px" onclick="addAtt()">첨부 추가</button><button class="btn btn2" style="width:100%;margin-top:8px" onclick="closeAttach()">닫기</button></div>
+<input id="attCam" type="file" accept="image/*" capture="environment" style="position:absolute;left:-9999px" onchange="attSelected(event)">
+<input id="attFile" type="file" accept="image/*,.pdf,application/pdf" style="position:absolute;left:-9999px" onchange="attSelected(event)">
+
+<datalist id="dl-trade"></datalist>
+<datalist id="dl-material"></datalist>
+<datalist id="dl-equipment"></datalist>
+<datalist id="dl-company"></datalist>
+<datalist id="dl-location"></datalist>
+<datalist id="dl-unit"></datalist>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LS='daily_hub_v1';let editId=null,W=[],P=[],E=[],M=[],A=[],L=[],pending=null;
+
+const MASTER_LS='daily_master_v2';
+const DEFAULT_MASTER={
+ trade:['철근공사','철근콘크리트공사','거푸집공사','콘크리트공사','철골공사','방수공사','조적공사','미장공사','타일공사','도장공사','전기공사','설비공사','토공사','가설공사'],
+ material:['철근 D10','철근 D13','철근 D16','레미콘 25-24-150','레미콘 25-21-120','거푸집 합판','각재','단열재','방수재','시멘트','모래','자갈'],
+ equipment:['크레인','카고크레인','굴삭기 03','굴삭기 06','지게차','펌프카','레미콘차','덤프트럭','고소작업대','스카이'],
+ company:['직영','철근업체','형틀업체','콘크리트업체','설비업체','전기업체','방수업체','미장업체'],
+ location:['지하1층','1층','2층','3층','옥상','외부','101동','102동','A구간','B구간'],
+ unit:['명','공','대','일','ton','kg','m3','m2','m','EA','식']
+};
+function getMaster(){
+  const saved=JSON.parse(localStorage.getItem(MASTER_LS)||'{}');
+  const m=JSON.parse(JSON.stringify(DEFAULT_MASTER));
+  Object.keys(saved).forEach(k=>{
+    m[k]=Array.from(new Set([...(m[k]||[]),...(saved[k]||[])]));
+  });
+  return m;
+}
+function setMaster(m){localStorage.setItem(MASTER_LS,JSON.stringify(m));renderDatalists();}
+function renderDatalists(){
+  const m=getMaster();
+  const pairs={trade:'dl-trade',material:'dl-material',equipment:'dl-equipment',company:'dl-company',location:'dl-location',unit:'dl-unit'};
+  Object.keys(pairs).forEach(k=>{
+    const el=document.getElementById(pairs[k]);
+    if(el) el.innerHTML=(m[k]||[]).map(v=>`<option value="${esc(v)}"></option>`).join('');
+  });
+}
+function addMaster(){
+  const type=document.getElementById('masterType').value;
+  const name=document.getElementById('masterName').value.trim();
+  if(!name){toast('명칭을 입력하세요');return}
+  const m=getMaster();
+  if(!m[type])m[type]=[];
+  if(!m[type].includes(name))m[type].push(name);
+  setMaster(m);
+  document.getElementById('masterName').value='';
+  renderMaster();
+  toast('기준정보 추가');
+}
+function deleteMaster(type,name){
+  const m=getMaster();
+  m[type]=(m[type]||[]).filter(x=>x!==name);
+  setMaster(m);
+  renderMaster();
+}
+function renderMaster(){
+  renderDatalists();
+  const m=getMaster();
+  const names={trade:'공종',material:'자재',equipment:'장비',company:'업체',location:'위치',unit:'단위'};
+  const el=document.getElementById('masterList');
+  if(!el)return;
+  el.innerHTML=Object.keys(names).map(k=>`
+    <div class="link"><b>${names[k]}</b>
+      <div style="margin-top:6px">
+        ${(m[k]||[]).map(v=>`<span class="badge">${esc(v)} <button onclick="deleteMaster('${k}','${esc(v)}')" style="border:0;background:transparent;color:#c5221f;font-weight:900">×</button></span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+function dateCodeFrom(v){return String(v||today()).replace(/-/g,'')}
+function makeDailyId(date){
+  const dc=dateCodeFrom(date);
+  const same=reps().filter(x=>String(x.date_code||dateCodeFrom(x.workDate))===dc);
+  const n=String(same.length+1).padStart(3,'0');
+  return `DR-${dc}-${n}`;
+}
+function updateCodePreview(){
+  const d=document.getElementById('workDate')?.value||today();
+  const code=editId||`DR-${dateCodeFrom(d)}-자동`;
+  const el=document.getElementById('codeDaily');
+  if(el)el.textContent=code;
+}
+
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function cfg(){return{dailyUrl:localStorage.dailyUrl||'',photoUrl:localStorage.photoUrl||'',site:localStorage.site||'',company:localStorage.company||'',writer:localStorage.writer||''}}
+function reps(){return JSON.parse(localStorage.getItem(LS)||'[]')}function setReps(v){localStorage.setItem(LS,JSON.stringify(v))}
+function go(s){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('on'));$('s-'+s).classList.add('on');if(s==='home')home();if(s==='set')loadSet();if(s==='arc')arc();if(s==='sum')summary();if(s==='master')renderMaster()}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+function home(){const c=cfg();$('homeSite').textContent=c.site||'현장명 미설정'}
+function loadSet(){const c=cfg();dailyUrl.value=c.dailyUrl;photoUrl.value=c.photoUrl;site.value=c.site;company.value=c.company;setWriter.value=c.writer}
+function saveSet(){localStorage.dailyUrl=dailyUrl.value.trim();localStorage.photoUrl=photoUrl.value.trim();localStorage.site=site.value.trim();localStorage.company=company.value.trim();localStorage.writer=setWriter.value.trim();toast('설정 저장');go('home')}
+function newDaily(){editId=null;W=[];P=[];E=[];M=[];A=[];L=[];workDate.value=today();weather.value='맑음';writer.value=cfg().writer;temp.value='';note.value='';tomorrow.value='';addWork();addWorker();addEquip();addMat();renderAll();go('form');updateCodePreview();updateCodePreview();checkPhotoPdf()}
+function collect(){const dc=dateCodeFrom(workDate.value);const id=editId||makeDailyId(workDate.value);return{daily_id:id,date_code:dc,hub_key:'DAY-'+dc,site:cfg().site,company:cfg().company,workDate:workDate.value,weather:weather.value,writer:writer.value,temp:temp.value,note:note.value,tomorrow:tomorrow.value,works:W,workers:P,equips:E,materials:M,attachments:A,photoLinks:L,status:'active',updated_at:new Date().toISOString()}}
+function saveLocal(){const r=collect();editId=r.daily_id;updateCodePreview();const a=reps().filter(x=>x.daily_id!==r.daily_id);a.unshift(r);setReps(a);toast('임시저장')}
+async function saveServer(){if(!cfg().dailyUrl){toast('작업일보 URL 필요');go('set');return}saveLocal();const r=collect();toast('저장/PDF 요청 중');try{await fetch(cfg().dailyUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({type:'save_daily_hub_v1',...r})});toast('저장 요청 완료')}catch(e){toast('저장 실패')}}
+function copyYesterday(){const a=reps().filter(x=>x.workDate<today()).sort((a,b)=>b.workDate.localeCompare(a.workDate));if(!a.length){toast('복사할 일보 없음');return}newDaily();const s=a[0];W=JSON.parse(JSON.stringify(s.works||[]));P=JSON.parse(JSON.stringify(s.workers||[]));E=JSON.parse(JSON.stringify(s.equips||[]));M=JSON.parse(JSON.stringify(s.materials||[])).map(x=>({...x,in_qty:'',use_qty:''}));renderAll();toast('복사 완료')}
+function renderAll(){rw();rp();re();rm();ra();rl()}
+function addWork(){W.push({work_id:'WK-'+dateCodeFrom(workDate.value||today())+'-'+String(W.length+1).padStart(3,'0'),trade:'',location:'',content:'',progress:''});rw()}function rw(){works.innerHTML=W.map((x,i)=>`<div class=item><div class=ih>${x.work_id||('WK-'+dateCodeFrom(workDate.value)+'-'+String(i+1).padStart(3,'0'))}<button class="mini btnr" onclick="W.splice(${i},1);rw()">삭제</button></div><div class=grid><input class=inp list="dl-trade" placeholder=공종 value="${esc(x.trade)}" onchange="W[${i}].trade=this.value"><input class=inp list="dl-location" placeholder=위치 value="${esc(x.location)}" onchange="W[${i}].location=this.value"></div><input class=inp style="margin-top:8px" placeholder=작업내용 value="${esc(x.content)}" onchange="W[${i}].content=this.value"><input class=inp style="margin-top:8px" type=number placeholder=진행률 value="${esc(x.progress)}" onchange="W[${i}].progress=this.value"></div>`).join('')}
+function addWorker(){P.push({worker_id:'WR-'+dateCodeFrom(workDate.value||today())+'-'+String(P.length+1).padStart(3,'0'),trade:'',company:'',count:''});rp()}function rp(){workers.innerHTML=P.map((x,i)=>`<div class=item><div class=ih>${x.worker_id||('WR-'+dateCodeFrom(workDate.value)+'-'+String(i+1).padStart(3,'0'))}<button class="mini btnr" onclick="P.splice(${i},1);rp()">삭제</button></div><div class=grid><input class=inp list="dl-trade" placeholder=공종 value="${esc(x.trade)}" onchange="P[${i}].trade=this.value"><input class=inp list="dl-company" placeholder=업체 value="${esc(x.company)}" onchange="P[${i}].company=this.value"></div><input class=inp style="margin-top:8px" type=number placeholder=인원 value="${esc(x.count)}" onchange="P[${i}].count=this.value"></div>`).join('')}
+function addEquip(){E.push({equip_id:'EQ-'+dateCodeFrom(workDate.value||today())+'-'+String(E.length+1).padStart(3,'0'),name:'',qty:'',desc:''});re()}function re(){equips.innerHTML=E.map((x,i)=>`<div class=item><div class=ih>${x.equip_id||('EQ-'+dateCodeFrom(workDate.value)+'-'+String(i+1).padStart(3,'0'))}<button class="mini btnr" onclick="E.splice(${i},1);re()">삭제</button></div><div class=grid><input class=inp list="dl-equipment" placeholder=장비명 value="${esc(x.name)}" onchange="E[${i}].name=this.value"><input class=inp type=number placeholder=수량 value="${esc(x.qty)}" onchange="E[${i}].qty=this.value"></div><input class=inp style="margin-top:8px" placeholder=사용내용 value="${esc(x.desc)}" onchange="E[${i}].desc=this.value"></div>`).join('')}
+function addMat(){M.push({material_id:'MT-'+dateCodeFrom(workDate.value||today())+'-'+String(M.length+1).padStart(3,'0'),trade:'',name:'',spec:'',in_qty:'',use_qty:'',unit:''});rm()}function rm(){mats.innerHTML=M.map((x,i)=>`<div class=item><div class=ih>${x.material_id||('MT-'+dateCodeFrom(workDate.value)+'-'+String(i+1).padStart(3,'0'))}<button class="mini btnr" onclick="M.splice(${i},1);rm()">삭제</button></div><div class=grid><input class=inp list="dl-trade" placeholder=공종 value="${esc(x.trade)}" onchange="M[${i}].trade=this.value"><input class=inp list="dl-material" placeholder=자재명 value="${esc(x.name)}" onchange="M[${i}].name=this.value"></div><div class=grid style="margin-top:8px"><input class=inp placeholder=규격 value="${esc(x.spec)}" onchange="M[${i}].spec=this.value"><input class=inp list="dl-unit" placeholder=단위 value="${esc(x.unit)}" onchange="M[${i}].unit=this.value"></div><div class=grid style="margin-top:8px"><input class=inp type=number placeholder=반입 value="${esc(x.in_qty)}" onchange="M[${i}].in_qty=this.value"><input class=inp type=number placeholder=사용 value="${esc(x.use_qty)}" onchange="M[${i}].use_qty=this.value"></div></div>`).join('')}
+async function checkPhotoPdf(){L=[];if(!cfg().photoUrl){rl();toast('사진관리 URL 없음');return}try{const r=await fetch(cfg().photoUrl+'?action=list_pdf&date='+encodeURIComponent(workDate.value||today()));const d=await r.json();L=d.items||[];rl();toast('사진대장 '+L.length+'건 조회')}catch(e){rl();toast('사진대장 조회 실패')}}
+function rl(){
+  if(!L.length){
+    photoLinks.innerHTML='<div class=sub>연결된 사진대장이 없습니다.</div>';
+    return;
+  }
+
+  photoLinks.innerHTML=L.map((x,idx)=>{
+    const title=(x.category_name||'사진대장')+' 사진대장';
+    const date=x.photo_date||workDate.value||today();
+    const source=x.source||'PDF';
+    const count=x.photo_count?(' · 사진 '+x.photo_count+'장'):'';
+    const url=x.pdf_url||'';
+
+    return `<div class="photo-pdf-card">
+      <div class="photo-pdf-icon">📄</div>
+      <div class="photo-pdf-info">
+        <div class="photo-pdf-title">${esc(title)}</div>
+        <div class="photo-pdf-meta">${esc(date)} · ${esc(source)}${esc(count)}</div>
+        <div class="photo-pdf-actions">
+          <button class="mini" onclick="openPhotoPdf(${idx})">PDF 열기</button>
+          <span class="badge">일보 포함</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openPhotoPdf(idx){
+  const item=L[idx];
+  if(!item||!item.pdf_url){toast('PDF 링크가 없습니다');return}
+  window.open(item.pdf_url,'_blank','noopener');
+}
+
+function openAttach(){pending=null;attTitle.value='';attTrade.value='';attSheet.style.display='block'}function closeAttach(){attSheet.style.display='none'}function pickAtt(t){$(t==='cam'?'attCam':'attFile').click()}
+function readFile(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)})}async function attSelected(e){const f=e.target.files[0];if(!f)return;pending={name:f.name,type:f.type,data:await readFile(f)};toast('파일 선택됨');e.target.value=''}
+function addAtt(){if(!pending){toast('파일 선택 필요');return}A.push({attach_id:'AT-'+dateCodeFrom(workDate.value)+'-'+String(A.length+1).padStart(3,'0'),date_code:dateCodeFrom(workDate.value),doc_type:attType.value,title:attTitle.value,trade:attTrade.value,file_name:pending.name,file_type:pending.type,file_data:pending.data,status:'active'});closeAttach();ra()}function ra(){atts.innerHTML=A.length?A.map((x,i)=>`<div class=link><b>${esc(x.doc_type)} · ${esc(x.title||x.file_name)}</b><div class=sub>${esc(x.trade)} · ${esc(x.file_name)}</div><button class="mini btnr" onclick="A.splice(${i},1);ra()">삭제</button></div>`).join(''):'<div class=sub>첨부된 서류가 없습니다.</div>'}
+function arc(){const a=reps().filter(x=>x.status!=='deleted');arcList.innerHTML=a.length?a.map(r=>`<div class=card><div class=ct>${esc(r.workDate)} 작업일보</div><div class=sub>작업 ${r.works?.length||0}건 · 첨부 ${r.attachments?.length||0}건</div><button class="btn btn2" onclick="openRep('${r.daily_id}')">수정</button></div>`).join(''):'<div class=card>저장 자료 없음</div>'}
+function openRep(id){const r=reps().find(x=>x.daily_id===id);if(!r)return;editId=id;W=r.works||[];P=r.workers||[];E=r.equips||[];M=r.materials||[];A=r.attachments||[];L=r.photoLinks||[];workDate.value=r.workDate;weather.value=r.weather;writer.value=r.writer;temp.value=r.temp;note.value=r.note;tomorrow.value=r.tomorrow;renderAll();go('form');updateCodePreview()}
+function summary(){const a=reps().filter(x=>x.status!=='deleted');let wk=0,eq=0,mat={};a.forEach(r=>{(r.workers||[]).forEach(x=>wk+=Number(x.count||0));(r.equips||[]).forEach(x=>eq+=Number(x.qty||0));(r.materials||[]).forEach(x=>{const k=[x.trade,x.name,x.spec,x.unit].join('|');if(!mat[k])mat[k]={...x,i:0,u:0};mat[k].i+=Number(x.in_qty||0);mat[k].u+=Number(x.use_qty||0)})});sumList.innerHTML=`<div class=card><div class=ct>누계</div><span class=badge>일보 ${a.length}건</span><span class=badge>출역 ${wk}명</span><span class=badge>장비 ${eq}대</span><span class=badge>자재 ${Object.keys(mat).length}종</span></div>`+Object.values(mat).map(x=>`<div class=link><b>${esc(x.name)} ${esc(x.spec)}</b><div class=sub>반입 ${x.i}${esc(x.unit)} / 사용 ${x.u}${esc(x.unit)} / 잔량 ${x.i-x.u}${esc(x.unit)}</div></div>`).join('')}
+renderDatalists();
+home();
+</script></body></html>
