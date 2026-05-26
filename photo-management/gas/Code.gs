@@ -157,9 +157,12 @@ function createPdf_(payload) {
   const categoryCode = payload.category || "CONST";
   const category = CATEGORY_MAP[categoryCode] || CATEGORY_MAP.CONST;
   const dateCode = payload.date_code || String(photoDate).replace(/-/g, "");
-  const photos = readSheet_(SHEETS.PHOTO_DB).filter((photo) => {
+  const photos = readSheet_(SHEETS.PHOTO_DB).map(normalizePhoto_).filter((photo) => {
     return photo.photo_date === photoDate && photo.category === categoryCode;
   });
+  if (!photos.length) {
+    return { status: "error", message: "PDF로 생성할 사진이 없습니다. 사진조회에서 해당 날짜/카테고리를 먼저 확인하세요." };
+  }
   const pdfId = `PDF-${dateCode}-${categoryCode}`;
   const pdfName = `${photoDate}_${category.name}_001.pdf`;
   const html = buildPdfHtml_(payload, category, photos);
@@ -263,7 +266,7 @@ function photoBlock_(photo, isConst) {
     ? `<span class="detail">공종: ${esc_(photo.trade)} / 부위: ${esc_(photo.location)} / 일시: ${esc_(formatPhotoTime_(photo))}</span>`
     : `<span class="detail">일시: ${esc_(formatPhotoTime_(photo))}</span>`;
   return `
-    <tr><td class="image-cell"><img src="${toDriveImageUrl_(photo.file_url)}"></td></tr>
+    <tr><td class="image-cell"><img src="${photoImageSrc_(photo)}"></td></tr>
     <tr><td class="caption">${esc_(photo.content || photo.category_name || "사진대지")}${details}</td></tr>
   `;
 }
@@ -276,6 +279,17 @@ function resolveLayoutMode_(requestedMode, photoCount) {
 function toDriveImageUrl_(url) {
   const fileId = getDriveFileId_(url);
   return fileId ? driveThumbUrl_(fileId) : esc_(url);
+}
+
+function photoImageSrc_(photo) {
+  const fileId = photo.file_id || getDriveFileId_(photo.file_url) || getDriveFileId_(photo.thumb_url);
+  if (!fileId) return toDriveImageUrl_(photo.file_url || photo.thumb_url);
+  try {
+    const blob = DriveApp.getFileById(fileId).getBlob();
+    return `data:${blob.getContentType()};base64,${Utilities.base64Encode(blob.getBytes())}`;
+  } catch (error) {
+    return driveThumbUrl_(fileId);
+  }
 }
 
 function normalizePhoto_(photo) {
