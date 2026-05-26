@@ -324,8 +324,24 @@ function getDriveFileId_(url) {
 }
 
 function formatPhotoTime_(photo) {
-  if (photo.photo_time) return String(photo.photo_time).replace("T", " ");
-  return photo.created_at || photo.photo_date || "";
+  return formatKoreanDate_(photo.photo_time || photo.photo_date || photo.created_at);
+}
+
+function formatKoreanDate_(value) {
+  if (!value) return "";
+  let date;
+  if (Object.prototype.toString.call(value) === "[object Date]") {
+    date = value;
+  } else {
+    const text = String(value);
+    const match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (match) {
+      return `${match[1]}년 ${Number(match[2])}월 ${Number(match[3])}일`;
+    }
+    date = new Date(text);
+  }
+  if (isNaN(date.getTime())) return String(value);
+  return Utilities.formatDate(date, Session.getScriptTimeZone(), "yyyy년 M월 d일");
 }
 
 function formatDateValue_(value) {
