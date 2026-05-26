@@ -17,7 +17,8 @@ const Categories = (() => {
 
 const Photo = (() => {
   const state = {
-    queue: []
+    queue: [],
+    saving: false
   };
 
   function init() {
@@ -93,10 +94,13 @@ const Photo = (() => {
   }
 
   async function save() {
+    if (state.saving) return;
     if (!state.queue.length) {
       App.toast("저장할 사진을 선택하세요.");
       return;
     }
+    setSaving(true);
+    await waitForPaint();
     const meta = readMeta();
     const category = Categories.find(meta.category);
     const photos = state.queue.map((item) => ({
@@ -108,16 +112,34 @@ const Photo = (() => {
       base64: item.base64,
       data_url: item.data_url
     }));
-    const result = await Api.request("save_photos", { photos });
-    if (result.status === "ok") {
-      state.queue = [];
-      renderQueue();
-      App.toast(`${photos.length}장의 사진을 저장했습니다.`);
-      return;
+    try {
+      const result = await Api.request("save_photos", { photos });
+      if (result.status === "ok") {
+        state.queue = [];
+        renderQueue();
+        App.toast(`${photos.length}장의 사진을 저장했습니다.`);
+        return;
+      }
+      App.toast("사진 저장에 실패했습니다.");
+    } catch (error) {
+      App.toast("사진 저장에 실패했습니다.");
+    } finally {
+      setSaving(false);
     }
-    App.toast("사진 저장에 실패했습니다.");
   }
 
+  function setSaving(isSaving) {
+    state.saving = isSaving;
+    const button = document.getElementById("savePhotosBtn");
+    button.disabled = isSaving;
+    button.textContent = isSaving ? "저장중..." : "사진 저장";
+  }
+
+  function waitForPaint() {
+    return new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+    });
+  }
   function readMeta() {
     return {
       photo_date: document.getElementById("photoDate").value,

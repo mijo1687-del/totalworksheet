@@ -27,6 +27,11 @@ button {
   cursor: pointer;
 }
 button:hover { background: var(--primary-dark); }
+button:disabled {
+  opacity: 0.68;
+  cursor: wait;
+}
+button:disabled:hover { background: var(--primary); }
 button.secondary { background: #e8edf3; color: #263241; }
 button.secondary:hover { background: #dce3ec; }
 button.small { min-height: 32px; padding: 0 10px; }
