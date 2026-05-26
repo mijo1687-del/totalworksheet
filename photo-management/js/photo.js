@@ -168,7 +168,7 @@ const Photo = (() => {
   }
 
   function cardHtml(item, index, removable) {
-    const src = item.thumb_url || item.file_url || item.data_url || "";
+    const src = imageSrc(item);
     return `
       <article class="photo-card">
         <img src="${App.escape(src)}" alt="">
@@ -180,6 +180,20 @@ const Photo = (() => {
         </div>
       </article>
     `;
+  }
+
+  function imageSrc(item) {
+    const source = item.thumb_url || item.file_url || item.data_url || "";
+    const fileId = driveFileId(source) || item.file_id || driveFileId(item.file_url);
+    return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000` : source;
+  }
+
+  function driveFileId(url) {
+    const text = String(url || "");
+    const fileMatch = text.match(/\/d\/([^/]+)/);
+    if (fileMatch) return fileMatch[1];
+    const idMatch = text.match(/[?&]id=([^&]+)/);
+    return idMatch ? idMatch[1] : "";
   }
 
   function toggleCategoryFields() {

@@ -7,7 +7,7 @@ const HEADERS = {
   Photo_DB: [
     "photo_id", "date_code", "photo_date", "category", "category_name",
     "photo_time", "trade", "location", "content", "photographer", "memo", "file_name",
-    "file_url", "thumb_url", "created_at"
+    "file_id", "file_url", "thumb_url", "created_at"
   ],
   PDF_Log: [
     "pdf_id", "date_code", "photo_date", "category", "category_name",
@@ -104,8 +104,9 @@ function savePhotos_(photos) {
       photographer: photo.photographer || "",
       memo: photo.memo || "",
       file_name: file.getName(),
+      file_id: file.getId(),
       file_url: file.getUrl(),
-      thumb_url: file.getUrl(),
+      thumb_url: driveThumbUrl_(file.getId()),
       created_at: now
     };
   });
@@ -125,7 +126,7 @@ function searchPhotos_(filters) {
       if (text.indexOf(keyword) < 0) return false;
     }
     return true;
-  });
+  }).map(normalizePhoto_);
   return { status: "ok", items: items };
 }
 
@@ -137,7 +138,7 @@ function deletePhoto_(photoId) {
   const target = photos.find((photo) => photo.photo_id === photoId);
   if (!target) return { status: "error", message: "사진을 찾을 수 없습니다." };
 
-  const fileId = getDriveFileId_(target.file_url);
+  const fileId = target.file_id || getDriveFileId_(target.file_url);
   if (fileId) {
     try {
       DriveApp.getFileById(fileId).setTrashed(true);
@@ -273,9 +274,22 @@ function resolveLayoutMode_(requestedMode, photoCount) {
 }
 
 function toDriveImageUrl_(url) {
-  const match = String(url || "").match(/\/d\/([^/]+)/);
-  if (!match) return esc_(url);
-  return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+  const fileId = getDriveFileId_(url);
+  return fileId ? driveThumbUrl_(fileId) : esc_(url);
+}
+
+function normalizePhoto_(photo) {
+  const fileId = photo.file_id || getDriveFileId_(photo.file_url) || getDriveFileId_(photo.thumb_url);
+  if (fileId) {
+    photo.file_id = fileId;
+    photo.thumb_url = driveThumbUrl_(fileId);
+  }
+  photo.photo_date = formatDateValue_(photo.photo_date);
+  return photo;
+}
+
+function driveThumbUrl_(fileId) {
+  return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
 }
 
 function getDriveFileId_(url) {
@@ -289,6 +303,14 @@ function getDriveFileId_(url) {
 function formatPhotoTime_(photo) {
   if (photo.photo_time) return String(photo.photo_time).replace("T", " ");
   return photo.created_at || photo.photo_date || "";
+}
+
+function formatDateValue_(value) {
+  if (Object.prototype.toString.call(value) === "[object Date]") {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), "yyyy-MM-dd");
+  }
+  const text = String(value || "");
+  return text.indexOf("T") > 0 ? text.slice(0, 10) : text;
 }
 
 function getPhotoFolder_(photoDate, categoryCode) {
