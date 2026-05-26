@@ -7,9 +7,6 @@ const Pdf = (() => {
     const today = App.today();
     document.getElementById("pdfDate").value = today;
     document.getElementById("createPdfBtn").addEventListener("click", create);
-    document.getElementById("pdfDate").addEventListener("change", updateCount);
-    document.getElementById("pdfCategory").addEventListener("change", updateCount);
-    updateCount();
   }
 
   async function updateCount() {
