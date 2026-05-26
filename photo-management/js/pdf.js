@@ -1,4 +1,8 @@
 const Pdf = (() => {
+  const state = {
+    creating: false
+  };
+
   function init() {
     const today = App.today();
     document.getElementById("pdfDate").value = today;
@@ -18,22 +22,44 @@ const Pdf = (() => {
   }
 
   async function create() {
+    if (state.creating) return;
     const photoDate = document.getElementById("pdfDate").value;
     const category = document.getElementById("pdfCategory").value;
-    const result = await Api.request("create_pdf", {
-      photo_date: photoDate,
-      date_code: Api.dateCode(photoDate),
-      category,
-      writer: document.getElementById("pdfWriter").value.trim(),
-      layout_mode: document.getElementById("pdfLayoutMode").value,
-      site_name: Api.CONFIG.siteName
-    });
-    if (result.status === "ok") {
-      renderArchive([result.item], "pdfResult");
-      App.toast(result.item.pdf_url ? "사진대장 PDF를 생성했습니다." : result.message || "PDF 기록을 만들었습니다.");
-      return;
+    setCreating(true);
+    await waitForPaint();
+    try {
+      const result = await Api.request("create_pdf", {
+        photo_date: photoDate,
+        date_code: Api.dateCode(photoDate),
+        category,
+        writer: document.getElementById("pdfWriter").value.trim(),
+        layout_mode: document.getElementById("pdfLayoutMode").value,
+        site_name: Api.CONFIG.siteName
+      });
+      if (result.status === "ok") {
+        renderArchive([result.item], "pdfResult");
+        App.toast(result.item.pdf_url ? "사진대장 PDF를 생성했습니다." : result.message || "PDF 기록을 만들었습니다.");
+        return;
+      }
+      App.toast(result.message || "PDF 생성에 실패했습니다.");
+    } catch (error) {
+      App.toast("PDF 생성에 실패했습니다.");
+    } finally {
+      setCreating(false);
     }
-    App.toast("PDF 생성에 실패했습니다.");
+  }
+
+  function setCreating(isCreating) {
+    state.creating = isCreating;
+    const button = document.getElementById("createPdfBtn");
+    button.disabled = isCreating;
+    button.textContent = isCreating ? "생성중..." : "PDF 생성";
+  }
+
+  function waitForPaint() {
+    return new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+    });
   }
 
   function renderArchive(items, targetId) {

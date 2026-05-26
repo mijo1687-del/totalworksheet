@@ -26,7 +26,25 @@ const Search = (() => {
       return;
     }
     target.className = "photo-grid";
-    target.innerHTML = items.map((item) => Photo.cardHtml(item, 0, false)).join("");
+    target.innerHTML = items.map((item) => Photo.cardHtml(item, 0, false).replace(
+      "</div>\n      </article>",
+      `<button type="button" class="danger small" data-delete-photo="${App.escape(item.photo_id)}">삭제</button></div>\n      </article>`
+    )).join("");
+    target.querySelectorAll("[data-delete-photo]").forEach((button) => {
+      button.addEventListener("click", () => deletePhoto(button.dataset.deletePhoto));
+    });
+  }
+
+  async function deletePhoto(photoId) {
+    if (!photoId) return;
+    if (!window.confirm("선택한 사진을 DB와 Drive에서 삭제할까요?")) return;
+    const result = await Api.request("delete_photo", { photo_id: photoId });
+    if (result.status === "ok") {
+      App.toast("사진을 삭제했습니다.");
+      searchPhotos();
+      return;
+    }
+    App.toast(result.message || "사진 삭제에 실패했습니다.");
   }
 
   async function loadPdfArchive() {

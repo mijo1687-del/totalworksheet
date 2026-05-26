@@ -6,7 +6,7 @@ const SHEETS = {
 const HEADERS = {
   Photo_DB: [
     "photo_id", "date_code", "photo_date", "category", "category_name",
-    "trade", "location", "content", "photographer", "memo", "file_name",
+    "photo_time", "trade", "location", "content", "photographer", "memo", "file_name",
     "file_url", "thumb_url", "created_at"
   ],
   PDF_Log: [
@@ -42,6 +42,7 @@ function doPost(e) {
   if (action === "setup") return json(setupSheets_());
   if (action === "save_photos") return json(savePhotos_(payload.photos || []));
   if (action === "search_photos") return json(searchPhotos_(payload));
+  if (action === "delete_photo") return json(deletePhoto_(payload.photo_id));
   if (action === "create_pdf") return json(createPdf_(payload));
   if (action === "list_pdf") return json(listPdf_(payload.date));
   if (action === "summary") return json(summary_());
@@ -52,7 +53,24 @@ function setupSheets_() {
   const ss = SpreadsheetApp.getActive();
   Object.keys(HEADERS).forEach((sheetName) => {
     const sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
-    if (sheet.getLastRow() === 0) sheet.appendRow(HEADERS[sheetName]);
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(HEADERS[sheetName]);
+      return;
+    }
+    const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    if (currentHeaders.join("|") !== HEADERS[sheetName].join("|")) {
+      const values = sheet.getDataRange().getValues();
+      values.shift();
+      const objects = values
+        .filter((row) => row.some(Boolean))
+        .map((row) => objectFromRow_(currentHeaders, row));
+      sheet.clearContents();
+      sheet.appendRow(HEADERS[sheetName]);
+      if (objects.length) {
+        sheet.getRange(2, 1, objects.length, HEADERS[sheetName].length)
+          .setValues(objects.map((item) => rowFromObject_(HEADERS[sheetName], item)));
+      }
+    }
   });
   return { status: "ok" };
 }
@@ -79,6 +97,7 @@ function savePhotos_(photos) {
       photo_date: photo.photo_date,
       category: photo.category,
       category_name: category.name,
+      photo_time: photo.photo_time || "",
       trade: photo.trade || "",
       location: photo.location || "",
       content: photo.content || "",
@@ -108,6 +127,27 @@ function searchPhotos_(filters) {
     return true;
   });
   return { status: "ok", items: items };
+}
+
+function deletePhoto_(photoId) {
+  setupSheets_();
+  if (!photoId) return { status: "error", message: "photo_id is required" };
+
+  const photos = readSheet_(SHEETS.PHOTO_DB);
+  const target = photos.find((photo) => photo.photo_id === photoId);
+  if (!target) return { status: "error", message: "사진을 찾을 수 없습니다." };
+
+  const fileId = getDriveFileId_(target.file_url);
+  if (fileId) {
+    try {
+      DriveApp.getFileById(fileId).setTrashed(true);
+    } catch (error) {
+      // Continue with DB deletion when the Drive file is already gone.
+    }
+  }
+
+  replaceSheet_(SHEETS.PHOTO_DB, photos.filter((photo) => photo.photo_id !== photoId));
+  return { status: "ok" };
 }
 
 function createPdf_(payload) {
@@ -179,58 +219,53 @@ function buildPdfHtml_(payload, category, photos) {
   for (let i = 0; i < photos.length; i += perPage) chunks.push(photos.slice(i, i + perPage));
   const pages = chunks.length ? chunks : [[]];
   const isConst = payload.category === "CONST";
+  const title = `일일 ${category.name} 사진대지`;
   return `
 <!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
   <style>
-    @page { size: A4; margin: 14mm; }
-    body { font-family: Arial, sans-serif; color: #111827; margin: 0; }
-    .page { min-height: 265mm; page-break-after: always; display: flex; flex-direction: column; }
-    h1 { text-align: center; font-size: 25px; margin: 0 0 10px; letter-spacing: 0; }
-    table { width: 100%; border-collapse: collapse; }
-    td, th { border: 1px solid #111827; padding: 6px; font-size: 12px; vertical-align: middle; }
-    th { background: #eef2f7; }
-    .meta td:nth-child(odd) { width: 16%; background: #eef2f7; font-weight: bold; }
-    .photos { flex: 1; display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; align-content: center; }
-    .photos.two { grid-template-rows: 1fr 1fr; }
-    .photo { border: 1px solid #111827; padding: 8px; display: flex; flex-direction: column; justify-content: center; }
-    .photo.one { min-height: 214mm; }
-    .photo.two { min-height: 104mm; }
-    .photo img { width: 100%; object-fit: contain; display: block; margin: 0 auto; background: #fff; }
-    .photo.one img { max-height: 174mm; }
-    .photo.two img { max-height: 74mm; }
-    .caption { margin-top: 6px; font-size: 12px; line-height: 1.35; text-align: center; }
-    .caption span { display: inline-block; margin: 0 6px; }
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, "Malgun Gothic", sans-serif; color: #111; margin: 0; }
+    .page { width: 210mm; height: 297mm; page-break-after: always; padding: 3mm 0; }
+    .sheet { width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; }
+    .sheet td { border: 1px solid #8ba0ad; text-align: center; vertical-align: middle; padding: 0; }
+    .title { height: 12mm; font-size: 15px; font-weight: bold; }
+    .image-cell { height: 122mm; padding: 5mm 12mm !important; }
+    .image-cell img { max-width: 100%; max-height: 112mm; object-fit: contain; }
+    .caption { height: 10mm; font-size: 13px; font-weight: bold; }
+    .blank { height: 122mm; }
+    .detail { display: block; margin-top: 2px; font-size: 11px; font-weight: normal; }
   </style>
 </head>
 <body>
   ${pages.map((page) => `
     <section class="page">
-      <h1>현 장 사 진 대 장</h1>
-      <table class="meta">
-        <tr><td>공사명</td><td>${esc_(payload.site_name)}</td><td>작업일</td><td>${esc_(payload.photo_date)}</td></tr>
-        <tr><td>구분</td><td>${esc_(category.name)}</td><td>작성자</td><td>${esc_(payload.writer)}</td></tr>
+      <table class="sheet">
+        <tr><td class="title">${esc_(title)}</td></tr>
+        ${photoBlock_(page[0], isConst)}
+        ${photoBlock_(page[1], isConst)}
       </table>
-      <div class="photos ${mode}">
-        ${page.map((photo) => `
-          <div class="photo ${mode}">
-            <img src="${toDriveImageUrl_(photo.file_url)}">
-            <div class="caption">
-              ${isConst ? `<span><b>공종</b> ${esc_(photo.trade)}</span><span><b>위치</b> ${esc_(photo.location)}</span>` : ""}
-              <span><b>내용</b> ${esc_(photo.content)}</span>
-              <span><b>촬영시간</b> ${esc_(photo.created_at)}</span>
-            </div>
-          </div>
-        `).join("")}
-      </div>
     </section>
   `).join("")}
 </body>
 </html>`;
 }
 
+function photoBlock_(photo, isConst) {
+  if (!photo) {
+    return '<tr><td class="blank"></td></tr><tr><td class="caption"></td></tr>';
+  }
+  const details = isConst
+    ? `<span class="detail">공종: ${esc_(photo.trade)} / 부위: ${esc_(photo.location)} / 일시: ${esc_(formatPhotoTime_(photo))}</span>`
+    : `<span class="detail">일시: ${esc_(formatPhotoTime_(photo))}</span>`;
+  return `
+    <tr><td class="image-cell"><img src="${toDriveImageUrl_(photo.file_url)}"></td></tr>
+    <tr><td class="caption">${esc_(photo.content || photo.category_name || "사진대지")}${details}</td></tr>
+  `;
+}
 function resolveLayoutMode_(requestedMode, photoCount) {
   if (requestedMode === "one") return "one";
   if (requestedMode === "two") return "two";
@@ -241,6 +276,19 @@ function toDriveImageUrl_(url) {
   const match = String(url || "").match(/\/d\/([^/]+)/);
   if (!match) return esc_(url);
   return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+}
+
+function getDriveFileId_(url) {
+  const text = String(url || "");
+  const fileMatch = text.match(/\/d\/([^/]+)/);
+  if (fileMatch) return fileMatch[1];
+  const idMatch = text.match(/[?&]id=([^&]+)/);
+  return idMatch ? idMatch[1] : "";
+}
+
+function formatPhotoTime_(photo) {
+  if (photo.photo_time) return String(photo.photo_time).replace("T", " ");
+  return photo.created_at || photo.photo_date || "";
 }
 
 function getPhotoFolder_(photoDate, categoryCode) {

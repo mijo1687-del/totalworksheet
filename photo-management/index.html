@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>현장 사진관리</title>
-  <link rel="stylesheet" href="css/style.css?v=20260526-2">
+  <link rel="stylesheet" href="css/style.css?v=20260526-3">
 </head>
 <body>
   <header class="topbar">
@@ -39,9 +39,10 @@
           <div class="grid two">
             <label>작업일<input type="date" id="photoDate"></label>
             <label>카테고리<select id="photoCategory"></select></label>
-            <label>공종<input type="text" id="photoTrade" list="tradeList" placeholder="철근공사"></label>
-            <label>부위<input type="text" id="photoLocation" list="locationList" placeholder="1층 A구간"></label>
+            <label class="const-only">공종<input type="text" id="photoTrade" list="tradeList" placeholder="철근공사"></label>
+            <label class="const-only">부위<input type="text" id="photoLocation" list="locationList" placeholder="1층 A구간"></label>
             <label>작업내용<input type="text" id="photoContent" placeholder="벽체 철근배근"></label>
+            <label>촬영일시<input type="datetime-local" id="photoTime"></label>
             <label>촬영자<input type="text" id="photographer" placeholder="촬영자"></label>
           </div>
           <label>메모<textarea id="photoMemo" rows="3"></textarea></label>
@@ -162,10 +163,10 @@
   <datalist id="locationList"></datalist>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="js/api.js?v=20260526-2"></script>
-  <script src="js/photo.js?v=20260526-2"></script>
-  <script src="js/pdf.js?v=20260526-2"></script>
-  <script src="js/search.js?v=20260526-2"></script>
-  <script src="js/app.js?v=20260526-2"></script>
+  <script src="js/api.js?v=20260526-3"></script>
+  <script src="js/photo.js?v=20260526-3"></script>
+  <script src="js/pdf.js?v=20260526-3"></script>
+  <script src="js/search.js?v=20260526-3"></script>
+  <script src="js/app.js?v=20260526-3"></script>
 </body>
 </html>

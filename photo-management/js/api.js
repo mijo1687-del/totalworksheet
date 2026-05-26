@@ -56,6 +56,12 @@ const Api = (() => {
       return Promise.resolve({ status: "ok", items: filterPhotos(read("photos", []), payload) });
     }
 
+    if (action === "delete_photo") {
+      const photos = read("photos", []);
+      write("photos", photos.filter((photo) => photo.photo_id !== payload.photo_id));
+      return Promise.resolve({ status: "ok" });
+    }
+
     if (action === "create_pdf") {
       const photos = filterPhotos(read("photos", []), {
         start_date: payload.photo_date,

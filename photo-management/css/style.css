@@ -117,6 +117,7 @@ input, select, textarea {
 textarea { resize: vertical; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .hidden-file { display: none; }
+.field-hidden { display: none; }
 
 .photo-grid {
   display: grid;

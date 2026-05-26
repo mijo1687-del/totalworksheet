@@ -24,9 +24,11 @@ const Photo = (() => {
   function init() {
     const today = App.today();
     document.getElementById("photoDate").value = today;
+    document.getElementById("photoTime").value = currentDateTime();
     document.getElementById("todayLabel").textContent = today;
     renderCategorySelects();
     bindInputs();
+    toggleCategoryFields();
     renderQueue();
   }
 
@@ -43,6 +45,7 @@ const Photo = (() => {
     document.getElementById("galleryBtn").addEventListener("click", () => document.getElementById("galleryInput").click());
     document.getElementById("cameraInput").addEventListener("change", addFiles);
     document.getElementById("galleryInput").addEventListener("change", addFiles);
+    document.getElementById("photoCategory").addEventListener("change", toggleCategoryFields);
     document.getElementById("clearQueueBtn").addEventListener("click", () => {
       state.queue = [];
       renderQueue();
@@ -52,6 +55,7 @@ const Photo = (() => {
 
   async function addFiles(event) {
     const files = Array.from(event.target.files || []);
+    document.getElementById("photoTime").value = currentDateTime();
     const loaded = await Promise.all(files.map(fileToItem));
     state.queue.push(...loaded);
     event.target.value = "";
@@ -107,6 +111,7 @@ const Photo = (() => {
     const photos = state.queue.map((item) => ({
       ...meta,
       date_code: Api.dateCode(meta.photo_date),
+      photo_time: meta.photo_time,
       category_name: category.name,
       file_name: item.file_name,
       file_type: item.file_type,
@@ -152,6 +157,7 @@ const Photo = (() => {
   function readMeta() {
     return {
       photo_date: document.getElementById("photoDate").value,
+      photo_time: document.getElementById("photoTime").value,
       category: document.getElementById("photoCategory").value,
       trade: document.getElementById("photoTrade").value.trim(),
       location: document.getElementById("photoLocation").value.trim(),
@@ -174,6 +180,19 @@ const Photo = (() => {
         </div>
       </article>
     `;
+  }
+
+  function toggleCategoryFields() {
+    const isConst = document.getElementById("photoCategory").value === "CONST";
+    document.querySelectorAll(".const-only").forEach((field) => {
+      field.classList.toggle("field-hidden", !isConst);
+    });
+  }
+
+  function currentDateTime() {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - offset).toISOString().slice(0, 16);
   }
 
   return {
