@@ -100,6 +100,7 @@ const Photo = (() => {
       return;
     }
     setSaving(true);
+    const savingStartedAt = Date.now();
     await waitForPaint();
     const meta = readMeta();
     const category = Categories.find(meta.category);
@@ -124,6 +125,7 @@ const Photo = (() => {
     } catch (error) {
       App.toast("사진 저장에 실패했습니다.");
     } finally {
+      await waitAtLeast(savingStartedAt, 700);
       setSaving(false);
     }
   }
@@ -139,6 +141,13 @@ const Photo = (() => {
     return new Promise((resolve) => {
       requestAnimationFrame(() => requestAnimationFrame(resolve));
     });
+  }
+
+  function waitAtLeast(startedAt, duration) {
+    const remaining = duration - (Date.now() - startedAt);
+    return remaining > 0
+      ? new Promise((resolve) => setTimeout(resolve, remaining))
+      : Promise.resolve();
   }
   function readMeta() {
     return {
