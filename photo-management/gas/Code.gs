@@ -237,14 +237,14 @@ function buildPdfHtml_(payload, category, photos) {
     .title { height: 14mm; text-align: center; font-size: 18px; letter-spacing: 8px; font-weight: normal; }
     .sheet { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .sheet td { border: 1px solid #111; padding: 0; }
-    .image-cell { height: 112mm; padding: 4mm !important; text-align: center; vertical-align: middle; }
-    .image-cell img { max-width: 100%; max-height: 103mm; object-fit: contain; }
-    .info-cell { height: 10mm; padding: 0 !important; }
+    .image-cell { height: 120mm; padding: 2mm !important; text-align: center; vertical-align: middle; }
+    .image-cell img { width: 100%; height: 116mm; object-fit: cover; display: block; }
+    .info-cell { height: 8mm; padding: 0 !important; }
     .info { width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; }
     .info td { border: 1px solid #111; height: 5mm; font-size: 8px; padding: 0 2mm; vertical-align: middle; }
     .info .label { width: 18mm; text-align: center; font-weight: bold; }
     .info .value { text-align: left; }
-    .blank { height: 112mm; }
+    .blank { height: 120mm; }
   </style>
 </head>
 <body>
