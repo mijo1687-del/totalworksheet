@@ -238,7 +238,7 @@ function buildPdfHtml_(payload, category, photos) {
     .sheet { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .sheet td { border: 1px solid #111; padding: 0; }
     .image-cell { height: 120mm; padding: 2mm !important; text-align: center; vertical-align: middle; }
-    .image-cell img { width: 100%; height: 116mm; object-fit: cover; display: block; }
+    .image-cell img { max-width: 70%; max-height: 81mm; object-fit: contain; display: inline-block; }
     .info-cell { height: 8mm; padding: 0 !important; }
     .info { width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; }
     .info td { border: 1px solid #111; height: 5mm; font-size: 8px; padding: 0 2mm; vertical-align: middle; }
