@@ -71,6 +71,7 @@ const Photo = (() => {
           file_name: file.name,
           file_type: file.type || "image/jpeg",
           file_size: file.size,
+          preview_url: URL.createObjectURL(file),
           data_url: String(reader.result),
           base64: String(reader.result).split(",")[1]
         });
@@ -183,7 +184,7 @@ const Photo = (() => {
   }
 
   function imageSrc(item) {
-    const source = item.thumb_url || item.file_url || item.data_url || "";
+    const source = item.preview_url || item.thumb_url || item.file_url || item.data_url || "";
     const fileId = driveFileId(source) || item.file_id || driveFileId(item.file_url);
     return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000` : source;
   }
