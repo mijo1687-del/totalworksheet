@@ -163,7 +163,7 @@ const Photo = (() => {
       trade: document.getElementById("photoTrade").value.trim(),
       location: document.getElementById("photoLocation").value.trim(),
       content: document.getElementById("photoContent").value.trim(),
-      photographer: document.getElementById("photographer").value.trim(),
+      photographer: "",
       memo: document.getElementById("photoMemo").value.trim()
     };
   }
