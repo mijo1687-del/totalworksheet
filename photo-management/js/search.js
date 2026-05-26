@@ -5,7 +5,8 @@ const Search = (() => {
     document.getElementById("searchEnd").value = today;
     document.getElementById("searchPhotosBtn").addEventListener("click", searchPhotos);
     document.getElementById("loadPdfArchiveBtn").addEventListener("click", loadPdfArchive);
-    document.getElementById("loadSummaryBtn").addEventListener("click", loadSummary);
+    const summaryButton = document.getElementById("loadSummaryBtn");
+    if (summaryButton) summaryButton.addEventListener("click", loadSummary);
   }
 
   async function searchPhotos() {

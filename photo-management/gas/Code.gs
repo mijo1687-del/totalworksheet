@@ -235,10 +235,10 @@ function buildPdfHtml_(payload, category, photos) {
     body { font-family: Arial, "Malgun Gothic", sans-serif; color: #111; margin: 0; }
     .page { width: 210mm; height: 297mm; page-break-after: always; padding: 7mm 8mm; }
     .title { height: 14mm; text-align: center; font-size: 18px; letter-spacing: 8px; font-weight: normal; }
-    .sheet { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .sheet { width: 70%; margin: 0 auto; border-collapse: collapse; table-layout: fixed; }
     .sheet td { border: 1px solid #111; padding: 0; }
     .image-cell { height: 120mm; padding: 2mm !important; text-align: center; vertical-align: middle; }
-    .image-cell img { max-width: 70%; max-height: 81mm; object-fit: contain; display: inline-block; }
+    .image-cell img { max-width: 100%; max-height: 81mm; object-fit: contain; display: inline-block; }
     .info-cell { height: 8mm; padding: 0 !important; }
     .info { width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; }
     .info td { border: 1px solid #111; height: 5mm; font-size: 8px; padding: 0 2mm; vertical-align: middle; }
