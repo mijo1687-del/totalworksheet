@@ -223,7 +223,7 @@ function buildPdfHtml_(payload, category, photos) {
   for (let i = 0; i < photos.length; i += perPage) chunks.push(photos.slice(i, i + perPage));
   const pages = chunks.length ? chunks : [[]];
   const isConst = payload.category === "CONST";
-  const title = `일일 ${category.name} 사진대지`;
+  const title = "사 진 대 장";
   return `
 <!doctype html>
 <html>
@@ -233,22 +233,25 @@ function buildPdfHtml_(payload, category, photos) {
     @page { size: A4; margin: 0; }
     * { box-sizing: border-box; }
     body { font-family: Arial, "Malgun Gothic", sans-serif; color: #111; margin: 0; }
-    .page { width: 210mm; height: 297mm; page-break-after: always; padding: 3mm 0; }
-    .sheet { width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; }
-    .sheet td { border: 1px solid #8ba0ad; text-align: center; vertical-align: middle; padding: 0; }
-    .title { height: 12mm; font-size: 15px; font-weight: bold; }
-    .image-cell { height: 122mm; padding: 5mm 12mm !important; }
-    .image-cell img { max-width: 100%; max-height: 112mm; object-fit: contain; }
-    .caption { height: 10mm; font-size: 13px; font-weight: bold; }
-    .blank { height: 122mm; }
-    .detail { display: block; margin-top: 2px; font-size: 11px; font-weight: normal; }
+    .page { width: 210mm; height: 297mm; page-break-after: always; padding: 7mm 8mm; }
+    .title { height: 14mm; text-align: center; font-size: 18px; letter-spacing: 8px; font-weight: normal; }
+    .sheet { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .sheet td { border: 1px solid #111; padding: 0; }
+    .image-cell { height: 112mm; padding: 4mm !important; text-align: center; vertical-align: middle; }
+    .image-cell img { max-width: 100%; max-height: 103mm; object-fit: contain; }
+    .info-cell { height: 10mm; padding: 0 !important; }
+    .info { width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; }
+    .info td { border: 1px solid #111; height: 5mm; font-size: 8px; padding: 0 2mm; vertical-align: middle; }
+    .info .label { width: 18mm; text-align: center; font-weight: bold; }
+    .info .value { text-align: left; }
+    .blank { height: 112mm; }
   </style>
 </head>
 <body>
   ${pages.map((page) => `
     <section class="page">
+      <div class="title">${esc_(title)}</div>
       <table class="sheet">
-        <tr><td class="title">${esc_(title)}</td></tr>
         ${photoBlock_(page[0], isConst)}
         ${photoBlock_(page[1], isConst)}
       </table>
@@ -260,14 +263,20 @@ function buildPdfHtml_(payload, category, photos) {
 
 function photoBlock_(photo, isConst) {
   if (!photo) {
-    return '<tr><td class="blank"></td></tr><tr><td class="caption"></td></tr>';
+    return '<tr><td class="blank"></td></tr><tr><td class="info-cell"></td></tr>';
   }
-  const details = isConst
-    ? `<span class="detail">공종: ${esc_(photo.trade)} / 부위: ${esc_(photo.location)} / 일시: ${esc_(formatPhotoTime_(photo))}</span>`
-    : `<span class="detail">일시: ${esc_(formatPhotoTime_(photo))}</span>`;
+  const infoRows = isConst
+    ? `
+      <tr><td class="label">내용</td><td class="value">${esc_(photo.content)}</td><td class="label">일시</td><td class="value">${esc_(formatPhotoTime_(photo))}</td></tr>
+      <tr><td class="label">공종</td><td class="value">${esc_(photo.trade)}</td><td class="label">부위</td><td class="value">${esc_(photo.location)}</td></tr>
+    `
+    : `
+      <tr><td class="label">내용</td><td class="value">${esc_(photo.content)}</td></tr>
+      <tr><td class="label">일시</td><td class="value">${esc_(formatPhotoTime_(photo))}</td></tr>
+    `;
   return `
     <tr><td class="image-cell"><img src="${photoImageSrc_(photo)}"></td></tr>
-    <tr><td class="caption">${esc_(photo.content || photo.category_name || "사진대지")}${details}</td></tr>
+    <tr><td class="info-cell"><table class="info">${infoRows}</table></td></tr>
   `;
 }
 function resolveLayoutMode_(requestedMode, photoCount) {
